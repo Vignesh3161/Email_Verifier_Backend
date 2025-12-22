@@ -1,38 +1,42 @@
 // server.js
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
 const { bulkVerify } = require("./utils/verify");
 
 const app = express();
 
 /* =========================
-   CORS CONFIG (IMPORTANT)
+   CORS CONFIG
    ========================= */
 app.use(
   cors({
-    origin: "*", // allow all origins (for development)
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    origin: "*", // development only
+    methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Handle preflight requests
-app.options("*", cors());
-
-// Large payload support
+/* =========================
+   BODY PARSER (BUILT-IN)
+   ========================= */
 app.use(
-  bodyParser.json({
+  express.json({
     limit: "500mb",
   })
 );
 
+/* =========================
+   VERIFY API
+   ========================= */
 app.post("/verify", async (req, res) => {
   try {
-    const emails = req.body.emails;
+    const { emails } = req.body;
 
     if (!Array.isArray(emails)) {
-      return res.status(400).json({ error: "emails must be an array" });
+      return res.status(400).json({
+        success: false,
+        message: "emails must be an array",
+      });
     }
 
     const start = Date.now();
@@ -49,11 +53,14 @@ app.post("/verify", async (req, res) => {
     console.error("SERVER ERROR:", err);
     res.status(500).json({
       success: false,
-      error: err.message,
+      message: "Internal Server Error",
     });
   }
 });
 
-app.listen(3000, () =>
-  console.log("🚀 Verification server running at http://localhost:3000")
-);
+/* =========================
+   SERVER START
+   ========================= */
+app.listen(3000, () => {
+  console.log("🚀 Verification server running at http://localhost:3000");
+});
